@@ -16,8 +16,11 @@
 package org.miner.conector;
 
 import java.util.Date;
+import java.util.Map;
 
+import org.miner.conector.service.MonitoringService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,17 +34,34 @@ public class ConnectorController {
     public String hello() {
         long emailSentTime = service.getEmailSentTime();
         long resetTime = service.getResetTime();
-        boolean alarmShouldBeSent = service.shouldSendConnectionAlert();
-        return "<h3>" + "Welcome to Mining Connector (v1)" + "</h3>" +
-                "<p>" + service.getLastPingMessage() + "</p>" +
+        return "<h3>" + "Welcome to Mining Connector (v2)" + "</h3>" +
+                statistics() +
                 "<p>" + (emailSentTime == 0 ? "no mail alerts sent" : "last mail sent " + TimeUtils.periodMessage(emailSentTime) + " ago") + "</p>" +
                 "<p>" + "last time was reset " + TimeUtils.periodMessage(resetTime) + " ago" + "</p>" +
-                "<p>" + (alarmShouldBeSent ? "next alert will be sent if no connection detected" : "alert already been sent") + "</p>" +
                 "<p>" +
                 "To force connection verification go to " + "<a href=/check>/check</a>" +
                 "<br>" +
                 "To reset email alert go to " + "<a href=/reset>/reset</a>" +
                 "</p>";
+    }
+
+    private String statistics() {
+        Map<String, MinerStatistics> statistics = service.getStatistics();
+        StringBuilder sb = new StringBuilder();
+        if (statistics.isEmpty()) {
+            sb.append("<p>" + "no pings received" + "</p>");
+        }
+        for (String id : statistics.keySet()) {
+            MinerStatistics minerStatistics = statistics.get(id);
+            boolean alertShouldBeSent = service.shouldNextConnectionAlertBeSend(minerStatistics);
+            sb.append("<p>");
+            sb.append("[").append(id).append("]").append("<br>");
+            sb.append("(count=" + minerStatistics.count + ", last ping=" +
+                    TimeUtils.periodMessage(minerStatistics.lastPingTime) + " ago)").append("<br>");
+            sb.append(alertShouldBeSent ? "next alert will be sent if no connection detected" : "alert has already been sent");
+            sb.append("</p>");
+        }
+        return sb.toString();
     }
 
     @RequestMapping(value = "/check", method = RequestMethod.GET)
@@ -56,9 +76,9 @@ public class ConnectorController {
     }
 
     @RequestMapping(value = "/ping", method = RequestMethod.POST)
-    public String ping() {
-        service.ping();
-        return new Date() + ": total pings " + service.totalPings();
+    public String ping(@RequestBody Ping ping) {
+        service.ping(ping);
+        return new Date() + ": total pings " + service.getStatisticsForId(ping.id).count;
     }
 
 }
