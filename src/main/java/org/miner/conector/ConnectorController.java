@@ -1,23 +1,9 @@
-/**
- * Copyright 2017 Google Inc.
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.miner.conector;
 
 import java.util.Date;
 import java.util.Map;
 
+import org.miner.conector.service.MinerStatistics;
 import org.miner.conector.service.MonitoringService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,7 +20,11 @@ public class ConnectorController {
     public String hello() {
         long emailSentTime = service.getEmailSentTime();
         long resetTime = service.getResetTime();
-        return "<h3>" + "Welcome to Mining Connector (v2)" + "</h3>" +
+        Date date = new Date();
+        return "<h3>" + "Welcome to Mining Connector (v2.1)" + "</h3>" +
+                "<p>" + "Server time: " + TimeUtils.defaultFormatedTime(date) + "<br>" +
+                "Israel time: " + TimeUtils.israeliFormatedTime(date) +
+                "</p>" +
                 statistics() +
                 "<p>" + (emailSentTime == 0 ? "no mail alerts sent" : "last mail sent " + TimeUtils.periodMessage(emailSentTime) + " ago") + "</p>" +
                 "<p>" + "last time was reset " + TimeUtils.periodMessage(resetTime) + " ago" + "</p>" +

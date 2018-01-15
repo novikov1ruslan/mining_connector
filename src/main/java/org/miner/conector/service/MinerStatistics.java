@@ -1,4 +1,4 @@
-package org.miner.conector;
+package org.miner.conector.service;
 
 public class MinerStatistics {
     public final long count;

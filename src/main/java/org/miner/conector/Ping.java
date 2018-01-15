@@ -1,11 +1,11 @@
 package org.miner.conector;
 
 public class Ping {
-    public String id;
+    public final String id;
 
-//    public Ping(String id) {
-//        this.id = id;
-//    }
+    public Ping(String id) {
+        this.id = id;
+    }
 
     @Override
     public boolean equals(Object o) {
