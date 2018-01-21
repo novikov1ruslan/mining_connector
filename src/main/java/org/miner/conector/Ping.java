@@ -1,10 +1,15 @@
 package org.miner.conector;
 
 public class Ping {
-    public final String id;
+    private String email;
+    private String id;
 
-    public Ping(String id) {
-        this.id = id;
+    public String getEmail() {
+        return email;
+    }
+
+    public String getId() {
+        return id;
     }
 
     @Override
@@ -14,18 +19,22 @@ public class Ping {
 
         Ping ping = (Ping) o;
 
+        if (email != null ? !email.equals(ping.email) : ping.email != null) return false;
         return id != null ? id.equals(ping.id) : ping.id == null;
     }
 
     @Override
     public int hashCode() {
-        return id != null ? id.hashCode() : 0;
+        int result = email != null ? email.hashCode() : 0;
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        return result;
     }
 
     @Override
     public String toString() {
         return "Ping{" +
-                "id='" + id + '\'' +
+                "email='" + email + '\'' +
+                ", id='" + id + '\'' +
                 '}';
     }
 }

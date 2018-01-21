@@ -3,7 +3,7 @@ package org.miner.conector.service;
 public class MinerStatistics {
     public final long count;
     public final long lastPingTime;
-    public final long lastConnectionLostTime;
+    public final long alertNotificationTime;
 
     public MinerStatistics() {
         this(0, 0, 0);
@@ -13,10 +13,10 @@ public class MinerStatistics {
         this(count, lastPingTime, 0);
     }
 
-    public MinerStatistics(long count, long lastPingTime, long lastConnectionLostTime) {
+    public MinerStatistics(long count, long lastPingTime, long alertNotificationTime) {
         this.count = count;
         this.lastPingTime = lastPingTime;
-        this.lastConnectionLostTime = lastConnectionLostTime;
+        this.alertNotificationTime = alertNotificationTime;
     }
 
     @Override

@@ -27,7 +27,7 @@ public class TimeUtils {
         return (time - since) / 1000;
     }
 
-    public static String periodMessage(long since) {
+    public static String formattedPeriod(long since) {
         long seconds = getPeriodInSeconds(since);
         long minutes = seconds / 60;
         long hours = minutes / 60;

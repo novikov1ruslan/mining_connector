@@ -1,16 +1,10 @@
 package org.miner.conector.service;
 
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Set;
 
 import org.miner.conector.Ping;
 import org.springframework.stereotype.Service;
@@ -19,116 +13,92 @@ import org.springframework.stereotype.Service;
 public class MonitoringService {
     private static final String BR = "<br>";
 
-    private static final String SENDER_ADDRESS = "novikov.ruslan@gmail.com";
-    private static final String DESTINATION_ADDRESS = "leonidnovikov77@gmail.com";
-    //    private static final String DESTINATION_ADDRESS = "ivy.games.studio@gmail.com";
     private static final int NO_CONNECTION_LIMIT_IN_MILLIS = 10 * 60 * 1000;
 
-    private long emailSentTime;
+    private final Map<String, User> users = new HashMap<>();
     private long resetTime = time();
-
-    private final Map<String, MinerStatistics> statistics = new HashMap<>();
 
     public String checkStatus() {
         log("checking status...");
-        if (statistics.isEmpty()) {
+        if (users.isEmpty()) {
             return "no pings received";
         }
 
         StringBuilder sb = new StringBuilder();
-        for (String id : statistics.keySet()) {
-            MinerStatistics minerStatistics = statistics.get(id);
-            String message = AlertMassageUtils.createMessage(id, minerStatistics);
-            sb.append(message).append(BR).append(BR);
-            if (shouldNextConnectionAlertBeSend(minerStatistics) && isItTimeToSendAlert(minerStatistics.lastPingTime)) {
-                sendAlert(id, message);
-            }
+
+        for (User user : users.values()) {
+            checkForUser(user, sb);
         }
 
         return sb.toString();
     }
 
-    private void sendAlert(String id, String message) {
-        boolean emailSent = sendEmail(id, DESTINATION_ADDRESS, message);
-        if (emailSent) {
-            emailSentTime = time();
-            MinerStatistics minerStatistics = statistics.get(id);
-            statistics.put(id, new MinerStatistics(minerStatistics.count, minerStatistics.lastPingTime, time()));
+    private void checkForUser(User user, StringBuilder sb) {
+        for (String id : user.getMinerIds()) {
+            MinerStatistics minerStatistics = user.getStatisticsForMiner(id);
+            String message = AlertMassageUtils.createMessage(id, minerStatistics);
+            sb.append(message).append(BR).append(BR);
+            if (shouldNextConnectionAlertBeSend(minerStatistics)
+                    && isItTimeToSendAlert(minerStatistics.lastPingTime)) {
+                sendAlert(user, id, message);
+            }
         }
-        sendEmail(id,"ivy.games.studio@gmail.com", message);
+    }
+
+    private void sendAlert(User user, String id, String message) {
+        boolean emailSent = EmailUtils.sendEmail(id, user.email, message);
+        if (emailSent) {
+            MinerStatistics minerStatistics = user.getStatisticsForMiner(id);
+            user.updateStatistics(id, new MinerStatistics(minerStatistics.count, minerStatistics.lastPingTime, time()));
+        }
+        EmailUtils.sendEmail(id,"ivy.games.studio@gmail.com", message + "\n\n" + user.email);
     }
 
     public boolean shouldNextConnectionAlertBeSend(MinerStatistics minerStatistics) {
-        long lastPingTime = minerStatistics.lastPingTime;
-        return (flagIsOn() || lastPingTime > minerStatistics.lastConnectionLostTime);
+        return !alertHasBeenSent(minerStatistics);
+    }
+
+    public boolean alertHasBeenSent(MinerStatistics minerStatistics) {
+        return minerStatistics.alertNotificationTime > minerStatistics.lastPingTime;
     }
 
     private boolean isItTimeToSendAlert(long lastPingTime) {
         return time() - lastPingTime > NO_CONNECTION_LIMIT_IN_MILLIS;
     }
 
-    private boolean flagIsOn() {
-        return resetTime > emailSentTime;
+    public User ping(Ping ping) {
+        User user = saveUser(ping.getEmail());
+        incrementPingCount(user, ping.getId());
+        log(new Date() + ": ping received: " + ping);
+        return user;
     }
 
-    public void ping(Ping ping) {
-        incrementPingCount(ping);
-        log(new Date() + ": ping received for " + ping.id);
+    private User saveUser(String email) {
+        User user = users.get(email);
+        if (user == null) {
+            user = new User(email);
+            users.put(user.email, user);
+        }
+        return user;
     }
 
-    private void incrementPingCount(Ping ping) {
-        MinerStatistics statisticsForId = getStatisticsForId(ping.id);
-        statistics.put(ping.id, new MinerStatistics(statisticsForId.count + 1, time()));
+    private void incrementPingCount(User user, String id) {
+        MinerStatistics statisticsForId = user.getStatisticsForMiner(id);
+        user.updateStatistics(id, new MinerStatistics(statisticsForId.count + 1, time()));
     }
 
     public void reset() {
         resetTime = time();
-        log("mail trigger reset");
-    }
-
-    public long getEmailSentTime() {
-        return emailSentTime;
+        users.clear();
+        log("server reset");
     }
 
     public long getResetTime() {
         return resetTime;
     }
 
-    public Map<String, MinerStatistics> getStatistics() {
-        return new HashMap<>(statistics);
-    }
-
-    public MinerStatistics getStatisticsForId(String id) {
-        MinerStatistics minerStatistics = statistics.get(id);
-        if (minerStatistics == null) {
-            minerStatistics = new MinerStatistics();
-        }
-        return minerStatistics;
-    }
-
-    private static boolean sendEmail(String id, String destination, String message) {
-        try {
-            log("sending email [" + message + "] to: " + destination + "...");
-            sendEmailImpl(id, destination, message);
-            return true;
-        } catch (Exception e) {
-            log("error: " + e);
-        }
-        return false;
-    }
-
-    private static void sendEmailImpl(String id, String destination, String message)
-            throws UnsupportedEncodingException, MessagingException {
-        Properties props = new Properties();
-        Session session = Session.getDefaultInstance(props, null);
-        Message msg = new MimeMessage(session);
-        InternetAddress from = new InternetAddress(SENDER_ADDRESS, id);
-        InternetAddress to = new InternetAddress(destination, "Mr. User");
-        msg.setFrom(from);
-        msg.addRecipient(Message.RecipientType.TO, to);
-        msg.setSubject("Connection lost");
-        msg.setText(message);
-        Transport.send(msg);
+    public Set<User> getStatistics() {
+        return new HashSet<>(users.values());
     }
 
     private static long time() {

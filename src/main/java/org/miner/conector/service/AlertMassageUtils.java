@@ -12,7 +12,7 @@ public class AlertMassageUtils {
             return id + ": no pings received";
         }
 
-        String timeString = TimeUtils.periodMessage(minerStatistics.lastPingTime);
+        String timeString = TimeUtils.formattedPeriod(minerStatistics.lastPingTime);
         Date date = new Date(minerStatistics.lastPingTime);
         return "No pings from [" + id + "] for " + timeString + BR +
                 "Last ping received at:" + BR +
