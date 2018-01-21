@@ -27,7 +27,7 @@ public class ConnectorController {
         return "<h3>" + "Welcome to Mining Connector (v3)" + "</h3>" +
 
                 "<p>" + "Server time: " + TimeUtils.defaultFormatedTime(date) +
-                BR + "Israel time: " + TimeUtils.israeliFormatedTime(date) +
+//                BR + "Israel time: " + TimeUtils.israeliFormatedTime(date) +
                 "</p>" +
                 "<p>" + "last time was reset " + TimeUtils.formattedPeriod(service.getResetTime()) + " ago" +
                 "</p>" +
@@ -35,7 +35,7 @@ public class ConnectorController {
                 "<p>" +
                 LONG_LINE +
                 BR + "To force connection verification go to " + "<a href=/check>/check</a>" +
-                BR + "To reset email alert go to " + "<a href=/reset>/reset</a>" +
+                BR + "To reset server go to " + "<a href=/reset>/reset</a>" +
                 "</p>";
     }
 

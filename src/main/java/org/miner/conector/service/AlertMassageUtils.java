@@ -16,7 +16,7 @@ public class AlertMassageUtils {
         Date date = new Date(minerStatistics.lastPingTime);
         return "No pings from [" + id + "] for " + timeString + BR +
                 "Last ping received at:" + BR +
-                "Server time: " + TimeUtils.defaultFormatedTime(date) + BR +
-                "Israel time: " + TimeUtils.israeliFormatedTime(date);
+                "Server time: " + TimeUtils.defaultFormatedTime(date);
+//                BR + "Israel time: " + TimeUtils.israeliFormatedTime(date);
     }
 }
