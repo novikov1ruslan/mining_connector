@@ -51,7 +51,6 @@ public class MonitoringService {
             MinerStatistics minerStatistics = user.getStatisticsForMiner(id);
             user.updateStatistics(id, new MinerStatistics(minerStatistics.count, minerStatistics.lastPingTime, time()));
         }
-        EmailUtils.sendEmail(id,"ivy.games.studio@gmail.com", message + "\n\n" + user.email);
     }
 
     public boolean shouldNextConnectionAlertBeSend(MinerStatistics minerStatistics) {
