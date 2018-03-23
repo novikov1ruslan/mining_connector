@@ -24,7 +24,7 @@ public class ConnectorController {
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String hello() {
         Date date = new Date();
-        return "<h3>" + "Welcome to Mining Connector (v3)" + "</h3>" +
+        return "<h3>" + "Welcome to Mining Connector (v4)" + "</h3>" +
 
                 "<p>" + "Server time: " + TimeUtils.defaultFormatedTime(date) +
 //                BR + "Israel time: " + TimeUtils.israeliFormatedTime(date) +
@@ -96,7 +96,7 @@ public class ConnectorController {
     @RequestMapping(value = "/ping", method = RequestMethod.POST)
     public String ping(@RequestBody Ping ping) {
         User user = service.ping(ping);
-        return new Date() + ": total pings " + user.getStatisticsForMiner(ping.getId()).count;
+        return "total pings " + user.getStatisticsForMiner(ping.getId()).count;
     }
 
 }
